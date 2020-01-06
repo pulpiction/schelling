@@ -14,7 +14,7 @@ def neighbors(xy, num_rows, num_cols, neighbor_size):
 def similarity(grid, xy, neighbor_size, tolerance):
     # Need to move (True) if fraction of friendlies are below tolerance
     m, n = grid.shape
-    nbhd = [grid[n] for n in list(neighbors(xy, m, n, neighbor_size))]
+    nbhd = [grid[k] for k in list(neighbors(xy, m, n, neighbor_size))]
     cnt = nbhd.count(grid[xy]) / len(nbhd)
     
     if cnt < tolerance:
@@ -22,46 +22,67 @@ def similarity(grid, xy, neighbor_size, tolerance):
     else:
         return False
 
-def schelling_model(size, neighbor_size, tolerance, prob_dist, max_frame=1e5, show_every=10):
-    # Take height (# rows) and width (# cols)
-    h, w = size
+class schelling:
 
-    # Initialize grid
-    grid = np.random.choice(3, size=size, p=prob_dist) - 1
+    """
+    Class for Schelling Segregation 2-Agent Model
 
-    # Run for each frame
-    frame = 0
-    while frame < max_frame:
+        - Initialization 
+            size : size of the grid
+            neighbor_size : radius definition of the neighborhood
+            neighbor_tol : tolerance for the neighborhood
+            prob_dist : probability distribution for the initialization of the grid
+            max_frame : maximum iteration to render (default : 50)
+            show_every : steps of iterations to rander (default : 5)
+    """
 
-
-        if not frame % show_every:
-            fig, ax = plt.subplots()
-            fig.suptitle('Iteration %d' % frame, fontsize=10)
-            ax.matshow(grid)
-
-            # Press 'q' to proceed to the next snapshot
-            plt.show()
-            
+    def __init__(self, size, neighbor_size, neighbor_tol, prob_dist, max_frame=50, show_every=5):
+        self.size = size
+        self.neighbor_size = neighbor_size
+        self.neighbor_tol = neighbor_tol
+        self.prob_dist = prob_dist
         
-        for i in range(h):
-            for j in range(w):
-                
-                if grid[(i,j)] == 0:
-                    pass
-                else:
-                    if similarity(grid, (i,j), neighbor_size, tolerance):
-                        empty1, empty2 = random.choice(np.argwhere(grid == 0))
-                        grid[empty1, empty2], grid[(i,j)] = grid[(i,j)], 0
-                    else:
-                        pass
+        self.max_frame = max_frame
+        self.show_every = show_every
 
-        frame = frame + 1
+    def run(self):
+        # Take height (# rows) and width (# cols)
+        h, w = self.size
+
+        # Initialize grid
+        grid = np.random.choice(3, size=self.size, p=self.prob_dist) - 1
+
+        # Run for each frame
+        frame = 0
+        while frame < self.max_frame:
+
+            if not frame % self.show_every:
+                fig, ax = plt.subplots()
+                fig.suptitle('Iteration %d' % frame, fontsize=10)
+                ax.matshow(grid)
+
+                # Press 'q' to proceed to the next snapshot
+                plt.show()
+                
+            
+            for i in range(h):
+                for j in range(w):
+                    
+                    if grid[(i,j)] == 0:
+                        pass
+                    else:
+                        if similarity(grid, (i,j), self.neighbor_size, self.neighbor_tol):
+                            empty1, empty2 = random.choice(np.argwhere(grid == 0))
+                            grid[empty1, empty2], grid[(i,j)] = grid[(i,j)], 0
+                        else:
+                            pass
+
+            frame = frame + 1
                 
 if __name__ == '__main__':
-    grid_size = (50, 50)
-    neighbor_size = 1
-    neighbor_tol = 0.5
-    init_prob_dist = [0.35, 0.3, 0.35]
+    
+    import configs
 
-
-    schelling_model(grid_size, neighbor_size, neighbor_tol, init_prob_dist, show_every=5)
+    vn = configs.vanilla().run()
+    lt = configs.low_tolerance().run()
+    ht = configs.high_tolerance().run()
